@@ -1,0 +1,11 @@
+local function SecurityCheck()
+    local url = "https://raw.githubusercontent.com/god565/only-gods-knows/refs/heads/main/blacklist.txt"
+    local s, content = pcall(function() return game:HttpGet(url) end)
+    if s and string.find(content, tostring(game.Players.LocalPlayer.UserId)) then
+        game.Players.LocalPlayer:Kick("🚫 Access Revoked by Arthur Elite System. You are blacklisted.")
+        return true
+    end
+    return false
+end
+
+if SecurityCheck() then return end
