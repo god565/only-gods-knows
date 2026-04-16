@@ -1,14 +1,32 @@
-local function CheckBlacklist()
-    local url = "https://raw.githubusercontent.com/god565/only-gods-knows/refs/heads/main/blacklist.txt"
-    local s, content = pcall(function() return game:HttpGet(url) end)
-    if s and string.find(content, tostring(game.Players.LocalPlayer.UserId)) then
-        game.Players.LocalPlayer:Kick("🚫 Access Denied: You are blacklisted by Arthur Elite System.")
-        return true
+-- [[ ARTHUR ELITE SECURITY SYSTEM ]]
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function CheckSecurity()
+    -- Dito titingin ang script kung banned ang player
+    local BlacklistURL = "https://raw.githubusercontent.com/god565/only-gods-knows/refs/heads/main/blacklist.txt"
+    
+    local success, content = pcall(function()
+        return game:HttpGet(BlacklistURL)
+    end)
+    
+    if success then
+        -- Chini-check kung ang UserId ng player ay nasa blacklist file
+        if string.find(content, tostring(LocalPlayer.UserId)) then
+            LocalPlayer:Kick("\n🐲 ARTHUR ELITE SECURITY 🐲\n\nACCESS REVOKED: You are blacklisted.\nContact Arthur for appeals.")
+            return true
+        end
+    else
+        warn("Security Check Failed: Could not connect to database.")
     end
     return false
 end
 
-if CheckBlacklist() then return end
+-- Patakbuhin ang security check agad bago lumabas ang GUI
+if CheckSecurity() then return end
+
+-- [[ DITO NA MAGSISIMULA ANG MAIN SCRIPT MO / GUI CODE ]]
+print("Access Granted: Welcome, " .. LocalPlayer.Name)
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
