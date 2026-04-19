@@ -8,6 +8,7 @@ local Camera = workspace.CurrentCamera
 -- [[ CONFIG ]]
 local AimEnabled, IsUnlocked, VisualsEnabled = false, false, false
 local WallCheckEnabled, IsMinimized = false, false
+local AutoDistanceAdj = true -- Added from previous script
 local AimSmoothness, AimFOV, AimOffset = 0.5, 300, 1.4
 local Allies, LoopBringData = {}, {}
 local AllyAllActive = false
@@ -80,17 +81,18 @@ Players.PlayerAdded:Connect(HandleESP); for _, p in pairs(Players:GetPlayers()) 
 -- [[ NAVIGATION ]]
 local Sidebar = Instance.new("Frame", MainFrame); Sidebar.Size = UDim2.new(0, 110, 1, -35); Sidebar.Position = UDim2.new(0, 0, 0, 35); Sidebar.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
 local Pages = Instance.new("Frame", MainFrame); Pages.Size = UDim2.new(1, -120, 1, -45); Pages.Position = UDim2.new(0, 115, 0, 40); Pages.BackgroundTransparency = 1
-local P_Main = Instance.new("ScrollingFrame", Pages); P_Main.Size = UDim2.new(1,0,1,0); P_Main.BackgroundTransparency = 1; P_Main.CanvasSize = UDim2.new(0,0,1.5,0); Instance.new("UIListLayout", P_Main).Padding = UDim.new(0, 8)
+local P_Main = Instance.new("ScrollingFrame", Pages); P_Main.Size = UDim2.new(1,0,1,0); P_Main.BackgroundTransparency = 1; P_Main.CanvasSize = UDim2.new(0,0,1.8,0); Instance.new("UIListLayout", P_Main).Padding = UDim.new(0, 8)
 local P_Players = Instance.new("Frame", Pages); P_Players.Size = UDim2.new(1,0,1,0); P_Players.BackgroundTransparency = 1; P_Players.Visible = false
 local P_Misc = Instance.new("ScrollingFrame", Pages); P_Misc.Size = UDim2.new(1,0,1,0); P_Misc.BackgroundTransparency = 1; P_Misc.Visible = false; P_Misc.CanvasSize = UDim2.new(0,0,1.2,0); Instance.new("UIListLayout", P_Misc).Padding = UDim.new(0, 8)
 
 -- [[ MAIN TAB FEATURES ]]
-local function CreateToggle(text, parent, callback)
-    local b = Instance.new("TextButton", parent); b.Text = text..": OFF"; b.Size = UDim2.new(0.95, 0, 0, 35); b.BackgroundColor3 = Color3.fromRGB(180, 0, 0); b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"; Instance.new("UICorner", b)
-    local e = false; b.MouseButton1Click:Connect(function() e = not e; b.Text = text..(e and ": ON" or ": OFF"); b.BackgroundColor3 = e and Color3.fromRGB(80, 0, 0) or Color3.fromRGB(180, 0, 0); callback(e) end)
+local function CreateToggle(text, parent, callback, default)
+    local b = Instance.new("TextButton", parent); b.Text = text..(default and ": ON" or ": OFF"); b.Size = UDim2.new(0.95, 0, 0, 35); b.BackgroundColor3 = default and Color3.fromRGB(80, 0, 0) or Color3.fromRGB(180, 0, 0); b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"; Instance.new("UICorner", b)
+    local e = default or false; b.MouseButton1Click:Connect(function() e = not e; b.Text = text..(e and ": ON" or ": OFF"); b.BackgroundColor3 = e and Color3.fromRGB(80, 0, 0) or Color3.fromRGB(180, 0, 0); callback(e) end)
 end
 
 CreateToggle("AIMBOT", P_Main, function(v) AimEnabled = v end)
+CreateToggle("AUTO DIST ADJ", P_Main, function(v) AutoDistanceAdj = v end, true) -- Added Distance Adj Toggle
 CreateToggle("ESP", P_Main, function(v) VisualsEnabled = v end)
 CreateToggle("WALL CHECK", P_Main, function(v) WallCheckEnabled = v end)
 
@@ -197,7 +199,21 @@ RunService.RenderStepped:Connect(function()
             LockedTarget = t
         end
         if LockedTarget and LockedTarget.Character and LockedTarget.Character:FindFirstChild("Head") then
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, LockedTarget.Character.Head.Position + Vector3.new(0, AimOffset, 0)), AimSmoothness)
+            local TargetHead = LockedTarget.Character.Head
+            local MyRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local FinalVector = AimOffset 
+
+            -- [[ INTEGRATED AUTO DISTANCE ADJUSTMENT ]]
+            if MyRoot and AutoDistanceAdj then
+                local Distance = (MyRoot.Position - TargetHead.Position).Magnitude
+                if Distance > 25 then
+                    local DropComp = (Distance - 25) * 0.048
+                    FinalVector = AimOffset + DropComp
+                end
+                FinalVector = math.clamp(FinalVector, AimOffset, 10.0)
+            end
+
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, TargetHead.Position + Vector3.new(0, FinalVector, 0)), AimSmoothness)
         end
     end
     for _, data in pairs(LoopBringData) do 
