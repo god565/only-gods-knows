@@ -15,10 +15,12 @@ local Allies, IndividualESP = {}, {}
 local AllyAllActive = false
 local LockedTarget = nil
 local ScriptRunning = true
+local ViewingPlayer = nil 
 
 -- [[ UI SETUP ]]
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui); ScreenGui.Name = "Arthur_Elite_V4"; ScreenGui.ResetOnSpawn = false
 local MainFrame = Instance.new("Frame", ScreenGui); MainFrame.Size = UDim2.new(0, 600, 0, 450); MainFrame.Position = UDim2.new(0.5, -300, 0.5, -225); MainFrame.BackgroundColor3 = Color3.fromRGB(8, 0, 0); MainFrame.Visible = false; MainFrame.Active = true; MainFrame.Draggable = true; Instance.new("UICorner", MainFrame); Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(180, 0, 0)
+MainFrame.ClipsDescendants = true -- Mahalaga para sa minimize effect
 
 -- [[ INVENTORY MENU ]]
 local InvFrame = Instance.new("Frame", ScreenGui); InvFrame.Size = UDim2.new(0, 300, 0, 400); InvFrame.Position = UDim2.new(0.5, 310, 0.5, -200); InvFrame.BackgroundColor3 = Color3.fromRGB(10, 0, 0); InvFrame.Visible = false; Instance.new("UICorner", InvFrame); Instance.new("UIStroke", InvFrame).Color = Color3.fromRGB(255, 0, 0)
@@ -35,14 +37,33 @@ local LoginTitle = Instance.new("TextLabel", LoginPanel); LoginTitle.Text = "ART
 local PassBox = Instance.new("TextBox", LoginPanel); PassBox.Size = UDim2.new(0, 280, 0, 45); PassBox.Position = UDim2.new(0.5, -140, 0.35, 0); PassBox.PlaceholderText = "Enter Key..."; PassBox.BackgroundColor3 = Color3.fromRGB(25, 5, 5); PassBox.TextColor3 = Color3.new(1, 1, 1); Instance.new("UICorner", PassBox)
 local LoginBtn = Instance.new("TextButton", LoginPanel); LoginBtn.Text = "LOGIN"; LoginBtn.Size = UDim2.new(0, 280, 0, 45); LoginBtn.Position = UDim2.new(0.5, -140, 0.65, 0); LoginBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0); LoginBtn.TextColor3 = Color3.new(1, 1, 1); LoginBtn.Font = "GothamBold"; Instance.new("UICorner", LoginBtn)
 
--- [[ TOP BAR ]]
+-- [[ TOP BAR & MINIMIZE LOGIC ]]
 local TopBar = Instance.new("Frame", MainFrame); TopBar.Size = UDim2.new(1, 0, 0, 35); TopBar.BackgroundColor3 = Color3.fromRGB(20, 0, 0); Instance.new("UICorner", TopBar)
-local MainTitle = Instance.new("TextLabel", TopBar); MainTitle.Text = "UNIVERSAL SCRIPT - MADE BY ARTHUR"; MainTitle.Size = UDim2.new(1, -40, 1, 0); MainTitle.Position = UDim2.new(0, 10, 0, 0); MainTitle.TextColor3 = Color3.new(1, 0, 0); MainTitle.BackgroundTransparency = 1; MainTitle.Font = "GothamBold"; MainTitle.TextSize = 14; MainTitle.TextXAlignment = "Left"
+local MainTitle = Instance.new("TextLabel", TopBar); MainTitle.Text = "UNIVERSAL SCRIPT - MADE BY ARTHUR"; MainTitle.Size = UDim2.new(1, -80, 1, 0); MainTitle.Position = UDim2.new(0, 10, 0, 0); MainTitle.TextColor3 = Color3.new(1, 0, 0); MainTitle.BackgroundTransparency = 1; MainTitle.Font = "GothamBold"; MainTitle.TextSize = 14; MainTitle.TextXAlignment = "Left"
+
 local ExitBtn = Instance.new("TextButton", TopBar); ExitBtn.Text = "X"; ExitBtn.Size = UDim2.new(0, 30, 0, 30); ExitBtn.Position = UDim2.new(1, -35, 0, 2); ExitBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0); ExitBtn.TextColor3 = Color3.new(1, 1, 1); ExitBtn.Font = "GothamBold"; Instance.new("UICorner", ExitBtn)
 
+local MinBtn = Instance.new("TextButton", TopBar); MinBtn.Text = "-"; MinBtn.Size = UDim2.new(0, 30, 0, 30); MinBtn.Position = UDim2.new(1, -70, 0, 2); MinBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0); MinBtn.TextColor3 = Color3.new(1, 1, 1); MinBtn.Font = "GothamBold"; Instance.new("UICorner", MinBtn)
+
+-- Navigation and Pages container for easy hiding
+local ContentFrame = Instance.new("Frame", MainFrame); ContentFrame.Size = UDim2.new(1, 0, 1, -35); ContentFrame.Position = UDim2.new(0, 0, 0, 35); ContentFrame.BackgroundTransparency = 1
+
+MinBtn.MouseButton1Click:Connect(function()
+    IsMinimized = not IsMinimized
+    if IsMinimized then
+        MainFrame:TweenSize(UDim2.new(0, 600, 0, 35), "Out", "Quint", 0.4, true)
+        ContentFrame.Visible = false
+        MinBtn.Text = "+"
+    else
+        MainFrame:TweenSize(UDim2.new(0, 600, 0, 450), "Out", "Quint", 0.4, true)
+        ContentFrame.Visible = true
+        MinBtn.Text = "-"
+    end
+end)
+
 -- [[ NAVIGATION ]]
-local Sidebar = Instance.new("Frame", MainFrame); Sidebar.Size = UDim2.new(0, 130, 1, -35); Sidebar.Position = UDim2.new(0, 0, 0, 35); Sidebar.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
-local Pages = Instance.new("Frame", MainFrame); Pages.Size = UDim2.new(1, -140, 1, -45); Pages.Position = UDim2.new(0, 135, 0, 40); Pages.BackgroundTransparency = 1
+local Sidebar = Instance.new("Frame", ContentFrame); Sidebar.Size = UDim2.new(0, 130, 1, 0); Sidebar.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
+local Pages = Instance.new("Frame", ContentFrame); Pages.Size = UDim2.new(1, -140, 1, -10); Pages.Position = UDim2.new(0, 135, 0, 5); Pages.BackgroundTransparency = 1
 
 local P_Main = Instance.new("ScrollingFrame", Pages); P_Main.Size = UDim2.new(1,0,1,0); P_Main.BackgroundTransparency = 1; P_Main.CanvasSize = UDim2.new(0,0,2.2,0); P_Main.ScrollBarThickness = 3; P_Main.Visible = true
 Instance.new("UIListLayout", P_Main).Padding = UDim.new(0, 10)
@@ -89,7 +110,7 @@ RunService.RenderStepped:Connect(function() if dragging then local pos = math.cl
 
 -- Range Buttons
 local RangeFrame = Instance.new("Frame", P_Main); RangeFrame.Size = UDim2.new(0.9, 0, 0, 40); RangeFrame.BackgroundTransparency = 1
-Instance.new("UIListLayout", RangeFrame).FillDirection = "Horizontal"; Instance.new("UIListLayout", RangeFrame).Padding = UDim.new(0,10)
+local RL = Instance.new("UIListLayout", RangeFrame); RL.FillDirection = "Horizontal"; RL.Padding = UDim.new(0,10)
 local function rb(txt, val)
     local b = Instance.new("TextButton", RangeFrame); b.Text = txt; b.Size = UDim2.new(0, 120, 1, 0); b.BackgroundColor3 = Color3.fromRGB(150, 0, 0); b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"; Instance.new("UICorner", b)
     b.MouseButton1Click:Connect(function() UpdateSlider(val) end)
@@ -147,37 +168,16 @@ local ESPAllBtn = Instance.new("TextButton", P_Players); ESPAllBtn.Text = "ESP A
 local ListFrame = Instance.new("ScrollingFrame", P_Players); ListFrame.Size = UDim2.new(1, 0, 1, -45); ListFrame.Position = UDim2.new(0, 0, 0, 45); ListFrame.BackgroundTransparency = 1; ListFrame.AutomaticCanvasSize = "Y"
 Instance.new("UIListLayout", ListFrame).Padding = UDim.new(0, 5)
 
--- Ally All Logic
-AllyAllBtn.MouseButton1Click:Connect(function()
-    AllyAllActive = not AllyAllActive
-    AllyAllBtn.BackgroundColor3 = AllyAllActive and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer then Allies[p.UserId] = AllyAllActive end
-    end
-    RefreshList()
-end)
-
--- ESP All Logic
-ESPAllBtn.MouseButton1Click:Connect(function()
-    VisualsEnabled = not VisualsEnabled
-    ESPAllBtn.BackgroundColor3 = VisualsEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer then IndividualESP[p.UserId] = VisualsEnabled end
-    end
-    RefreshList()
-end)
+-- Ally/ESP All Logic... (Shortened for brevity but functionality remains same)
+AllyAllBtn.MouseButton1Click:Connect(function() AllyAllActive = not AllyAllActive; AllyAllBtn.BackgroundColor3 = AllyAllActive and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0); for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then Allies[p.UserId] = AllyAllActive end end RefreshList() end)
+ESPAllBtn.MouseButton1Click:Connect(function() VisualsEnabled = not VisualsEnabled; ESPAllBtn.BackgroundColor3 = VisualsEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0); for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then IndividualESP[p.UserId] = VisualsEnabled end end RefreshList() end)
 
 function RefreshList()
     for _, item in pairs(ListFrame:GetChildren()) do if item:IsA("Frame") then item:Destroy() end end
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and (SearchBar.Text == "" or string.find(string.lower(p.Name), string.lower(SearchBar.Text))) then
             local f = Instance.new("Frame", ListFrame); f.Size = UDim2.new(0.95, 0, 0, 55); f.BackgroundColor3 = Color3.fromRGB(25, 5, 5); Instance.new("UICorner", f)
-            
-            -- [[ HEADSHOT PROFILE ]]
-            local headshot = Instance.new("ImageLabel", f)
-            headshot.Size = UDim2.new(0, 45, 0, 45); headshot.Position = UDim2.new(0.01, 0, 0.5, -22.5)
-            headshot.BackgroundColor3 = Color3.fromRGB(40, 0, 0); headshot.Image = Players:GetUserThumbnailAsync(p.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420); Instance.new("UICorner", headshot).CornerRadius = UDim.new(1, 0)
-
+            local headshot = Instance.new("ImageLabel", f); headshot.Size = UDim2.new(0, 45, 0, 45); headshot.Position = UDim2.new(0.01, 0, 0.5, -22.5); headshot.BackgroundColor3 = Color3.fromRGB(40, 0, 0); headshot.Image = Players:GetUserThumbnailAsync(p.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420); Instance.new("UICorner", headshot).CornerRadius = UDim.new(1, 0)
             local name = Instance.new("TextLabel", f); name.Text = p.Name; name.Size = UDim2.new(0.3, 0, 1, 0); name.Position = UDim2.new(0.12, 0, 0, 0); name.TextColor3 = Color3.new(1,1,1); name.BackgroundTransparency = 1; name.TextSize = 8; name.Font = "Gotham"; name.TextXAlignment = "Left"
             
             local function btn(txt, x, col, cb)
@@ -186,11 +186,11 @@ function RefreshList()
             
             local isAlly = Allies[p.UserId] == true
             local isESP = IndividualESP[p.UserId] == true
-
             btn("ALLY", 0.38, isAlly and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0), function() Allies[p.UserId] = not Allies[p.UserId]; RefreshList() end)
             btn("ESP", 0.50, isESP and Color3.fromRGB(0, 150, 150) or Color3.fromRGB(50, 50, 50), function() IndividualESP[p.UserId] = not IndividualESP[p.UserId]; RefreshList() end)
             btn("INV", 0.62, Color3.fromRGB(100, 0, 150), function() OpenInventory(p) end)
-            btn("VIEW", 0.74, (Camera.CameraSubject == (p.Character and p.Character:FindFirstChild("Humanoid"))) and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0), function() Camera.CameraSubject = p.Character.Humanoid; RefreshList() end)
+            local isViewing = (ViewingPlayer == p)
+            btn("VIEW", 0.74, isViewing and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0), function() if ViewingPlayer == p then ViewingPlayer = nil Camera.CameraSubject = LocalPlayer.Character:FindFirstChild("Humanoid") else if p.Character and p.Character:FindFirstChild("Humanoid") then ViewingPlayer = p Camera.CameraSubject = p.Character.Humanoid end end RefreshList() end)
             btn("GOTO", 0.86, Color3.fromRGB(40, 40, 40), function() LocalPlayer.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame end)
         end
     end
@@ -205,7 +205,7 @@ QuickBtn("DEX EXPLORER", "https://raw.githubusercontent.com/infyiff/backup/main/
 QuickBtn("EMOTE UNLOCKER", "https://raw.githubusercontent.com/7yd7/Hub/refs/heads/Branch/GUIS/Emotes.lua")
 QuickBtn("INFINITE YIELD", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source")
 
--- [[ NAVIGATION ]]
+-- [[ TAB LOGIC ]]
 local function Tab(n, p, f)
     local b = Instance.new("TextButton", Sidebar); b.Text = n; b.Size = UDim2.new(1, 0, 0, 45); b.Position = UDim2.new(0,0,0,p); b.BackgroundColor3 = Color3.fromRGB(35, 0, 0); b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"; b.MouseButton1Click:Connect(f)
 end
@@ -233,7 +233,6 @@ RunService.RenderStepped:Connect(function()
             end
             LockedTarget = t
         end
-        
         if LockedTarget and LockedTarget.Character and LockedTarget.Character:FindFirstChild("Head") then
             if IsVisible(LockedTarget.Character.Head) then
                 local FinalOffset = AimOffset
@@ -242,9 +241,7 @@ RunService.RenderStepped:Connect(function()
                     if dist > 25 then FinalOffset = AimOffset + ((dist - 25) * 0.048) end
                 end
                 Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, LockedTarget.Character.Head.Position + Vector3.new(0, FinalOffset, 0)), AimSmoothness)
-            else
-                LockedTarget = nil
-            end
+            else LockedTarget = nil end
         end
     else LockedTarget = nil end
 end)
@@ -256,4 +253,9 @@ LoginBtn.MouseButton1Click:Connect(function()
     local Keys = {["peng_ARTHUR_SPECIAL"] = true, ["yole_SELDA_RP_KING"] = true, ["unknown_99102384"] = true}
     if Keys[PassBox.Text] then IsUnlocked = true; LoginContainer:Destroy(); MainFrame.Visible = true else PassBox.Text = ""; PassBox.PlaceholderText = "Invalid Key!" end
 end)
-UserInputService.InputBegan:Connect(function(i, g) if not g and i.KeyCode == Enum.KeyCode.K and IsUnlocked then MainFrame.Visible = not MainFrame.Visible end end)
+
+UserInputService.InputBegan:Connect(function(i, g) 
+    if not g and i.KeyCode == Enum.KeyCode.K and IsUnlocked then 
+        MainFrame.Visible = not MainFrame.Visible 
+    end 
+end)
