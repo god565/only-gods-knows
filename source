@@ -20,7 +20,7 @@ local ViewingPlayer = nil
 -- [[ UI SETUP ]]
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui); ScreenGui.Name = "Arthur_Elite_V4"; ScreenGui.ResetOnSpawn = false
 local MainFrame = Instance.new("Frame", ScreenGui); MainFrame.Size = UDim2.new(0, 600, 0, 450); MainFrame.Position = UDim2.new(0.5, -300, 0.5, -225); MainFrame.BackgroundColor3 = Color3.fromRGB(8, 0, 0); MainFrame.Visible = false; MainFrame.Active = true; MainFrame.Draggable = true; Instance.new("UICorner", MainFrame); Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(180, 0, 0)
-MainFrame.ClipsDescendants = true -- Mahalaga para sa minimize effect
+MainFrame.ClipsDescendants = true
 
 -- [[ INVENTORY MENU ]]
 local InvFrame = Instance.new("Frame", ScreenGui); InvFrame.Size = UDim2.new(0, 300, 0, 400); InvFrame.Position = UDim2.new(0.5, 310, 0.5, -200); InvFrame.BackgroundColor3 = Color3.fromRGB(10, 0, 0); InvFrame.Visible = false; Instance.new("UICorner", InvFrame); Instance.new("UIStroke", InvFrame).Color = Color3.fromRGB(255, 0, 0)
@@ -40,12 +40,9 @@ local LoginBtn = Instance.new("TextButton", LoginPanel); LoginBtn.Text = "LOGIN"
 -- [[ TOP BAR & MINIMIZE LOGIC ]]
 local TopBar = Instance.new("Frame", MainFrame); TopBar.Size = UDim2.new(1, 0, 0, 35); TopBar.BackgroundColor3 = Color3.fromRGB(20, 0, 0); Instance.new("UICorner", TopBar)
 local MainTitle = Instance.new("TextLabel", TopBar); MainTitle.Text = "UNIVERSAL SCRIPT - MADE BY ARTHUR"; MainTitle.Size = UDim2.new(1, -80, 1, 0); MainTitle.Position = UDim2.new(0, 10, 0, 0); MainTitle.TextColor3 = Color3.new(1, 0, 0); MainTitle.BackgroundTransparency = 1; MainTitle.Font = "GothamBold"; MainTitle.TextSize = 14; MainTitle.TextXAlignment = "Left"
-
 local ExitBtn = Instance.new("TextButton", TopBar); ExitBtn.Text = "X"; ExitBtn.Size = UDim2.new(0, 30, 0, 30); ExitBtn.Position = UDim2.new(1, -35, 0, 2); ExitBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0); ExitBtn.TextColor3 = Color3.new(1, 1, 1); ExitBtn.Font = "GothamBold"; Instance.new("UICorner", ExitBtn)
-
 local MinBtn = Instance.new("TextButton", TopBar); MinBtn.Text = "-"; MinBtn.Size = UDim2.new(0, 30, 0, 30); MinBtn.Position = UDim2.new(1, -70, 0, 2); MinBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0); MinBtn.TextColor3 = Color3.new(1, 1, 1); MinBtn.Font = "GothamBold"; Instance.new("UICorner", MinBtn)
 
--- Navigation and Pages container for easy hiding
 local ContentFrame = Instance.new("Frame", MainFrame); ContentFrame.Size = UDim2.new(1, 0, 1, -35); ContentFrame.Position = UDim2.new(0, 0, 0, 35); ContentFrame.BackgroundTransparency = 1
 
 MinBtn.MouseButton1Click:Connect(function()
@@ -90,7 +87,6 @@ CreateHeader("SETTINGS", P_Main)
 CreateToggle("WALL CHECK", P_Main, function(v) WallCheckEnabled = v end)
 CreateToggle("AUTO DIST ADJ", P_Main, function(v) AutoDistanceAdj = v end, true)
 
--- Strength Switcher
 local StrBtn = Instance.new("TextButton", P_Main); StrBtn.Text = "STRENGTH: MEDIUM (0.5)"; StrBtn.Size = UDim2.new(0.9, 0, 0, 38); StrBtn.BackgroundColor3 = Color3.fromRGB(120, 0, 0); StrBtn.TextColor3 = Color3.new(1,1,1); StrBtn.Font = "GothamBold"; Instance.new("UICorner", StrBtn)
 StrBtn.MouseButton1Click:Connect(function()
     if AimSmoothness == 0.2 then AimSmoothness = 0.5; StrBtn.Text = "STRENGTH: MEDIUM (0.5)"
@@ -98,7 +94,6 @@ StrBtn.MouseButton1Click:Connect(function()
     else AimSmoothness = 0.2; StrBtn.Text = "STRENGTH: LOW (0.2)" end
 end)
 
--- Vertical Height Slider
 local SliderFrame = Instance.new("Frame", P_Main); SliderFrame.Size = UDim2.new(0.9, 0, 0, 60); SliderFrame.BackgroundTransparency = 1
 local SliderLabel = Instance.new("TextLabel", SliderFrame); SliderLabel.Text = "VERTICAL HEIGHT: 1.4"; SliderLabel.Size = UDim2.new(1, 0, 0, 20); SliderLabel.TextColor3 = Color3.new(1,1,1); SliderLabel.BackgroundTransparency = 1; SliderLabel.Font = "GothamBold"
 local SliderBar = Instance.new("Frame", SliderFrame); SliderBar.Size = UDim2.new(0.9, 0, 0, 6); SliderBar.Position = UDim2.new(0.05, 0, 0.7, 0); SliderBar.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
@@ -108,7 +103,6 @@ local dragging = false; SliderDot.MouseButton1Down:Connect(function() dragging =
 UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 RunService.RenderStepped:Connect(function() if dragging then local pos = math.clamp((UserInputService:GetMouseLocation().X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1); UpdateSlider(pos * 3) end end)
 
--- Range Buttons
 local RangeFrame = Instance.new("Frame", P_Main); RangeFrame.Size = UDim2.new(0.9, 0, 0, 40); RangeFrame.BackgroundTransparency = 1
 local RL = Instance.new("UIListLayout", RangeFrame); RL.FillDirection = "Horizontal"; RL.Padding = UDim.new(0,10)
 local function rb(txt, val)
@@ -135,12 +129,10 @@ local function HandleESP(p)
         if not ScriptRunning or p == LocalPlayer then return end
         local char = p.Character
         if char and char:FindFirstChild("HumanoidRootPart") and (VisualsEnabled or IndividualESP[p.UserId]) then
-            local hum = char:FindFirstChild("Humanoid")
+            local hum = char:FindFirstChildOfClass("Humanoid")
             local isAlly = Allies[p.UserId] == true
-            
             local hl = char:FindFirstChild("ArthurHL") or Instance.new("Highlight", char); hl.Name = "ArthurHL"; hl.FillTransparency = 1
             hl.OutlineColor = isAlly and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
-            
             local bbu = char:FindFirstChild("ArthurESP") or Instance.new("BillboardGui", char); bbu.Name = "ArthurESP"; bbu.AlwaysOnTop = true; bbu.Size = UDim2.new(0, 200, 0, 50); bbu.Adornee = char.HumanoidRootPart; bbu.ExtentsOffset = Vector3.new(0, -3.8, 0)
             local txt = bbu:FindFirstChild("Info") or Instance.new("TextLabel", bbu); txt.Name = "Info"; txt.BackgroundTransparency = 1; txt.Size = UDim2.new(1,0,1,0); txt.Font = "GothamBold"; txt.TextSize = 10; txt.TextColor3 = isAlly and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
             txt.Text = string.upper(p.Name) .. " | " .. (hum and math.floor(hum.Health) or "0") .. " HP"
@@ -168,7 +160,6 @@ local ESPAllBtn = Instance.new("TextButton", P_Players); ESPAllBtn.Text = "ESP A
 local ListFrame = Instance.new("ScrollingFrame", P_Players); ListFrame.Size = UDim2.new(1, 0, 1, -45); ListFrame.Position = UDim2.new(0, 0, 0, 45); ListFrame.BackgroundTransparency = 1; ListFrame.AutomaticCanvasSize = "Y"
 Instance.new("UIListLayout", ListFrame).Padding = UDim.new(0, 5)
 
--- Ally/ESP All Logic... (Shortened for brevity but functionality remains same)
 AllyAllBtn.MouseButton1Click:Connect(function() AllyAllActive = not AllyAllActive; AllyAllBtn.BackgroundColor3 = AllyAllActive and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0); for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then Allies[p.UserId] = AllyAllActive end end RefreshList() end)
 ESPAllBtn.MouseButton1Click:Connect(function() VisualsEnabled = not VisualsEnabled; ESPAllBtn.BackgroundColor3 = VisualsEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0); for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then IndividualESP[p.UserId] = VisualsEnabled end end RefreshList() end)
 
@@ -179,11 +170,9 @@ function RefreshList()
             local f = Instance.new("Frame", ListFrame); f.Size = UDim2.new(0.95, 0, 0, 55); f.BackgroundColor3 = Color3.fromRGB(25, 5, 5); Instance.new("UICorner", f)
             local headshot = Instance.new("ImageLabel", f); headshot.Size = UDim2.new(0, 45, 0, 45); headshot.Position = UDim2.new(0.01, 0, 0.5, -22.5); headshot.BackgroundColor3 = Color3.fromRGB(40, 0, 0); headshot.Image = Players:GetUserThumbnailAsync(p.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420); Instance.new("UICorner", headshot).CornerRadius = UDim.new(1, 0)
             local name = Instance.new("TextLabel", f); name.Text = p.Name; name.Size = UDim2.new(0.3, 0, 1, 0); name.Position = UDim2.new(0.12, 0, 0, 0); name.TextColor3 = Color3.new(1,1,1); name.BackgroundTransparency = 1; name.TextSize = 8; name.Font = "Gotham"; name.TextXAlignment = "Left"
-            
             local function btn(txt, x, col, cb)
                 local b = Instance.new("TextButton", f); b.Text = txt; b.Size = UDim2.new(0, 32, 0, 22); b.Position = UDim2.new(x, 0, 0.5, -11); b.BackgroundColor3 = col; b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"; b.TextSize = 7; Instance.new("UICorner", b); b.MouseButton1Click:Connect(cb)
             end
-            
             local isAlly = Allies[p.UserId] == true
             local isESP = IndividualESP[p.UserId] == true
             btn("ALLY", 0.38, isAlly and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0), function() Allies[p.UserId] = not Allies[p.UserId]; RefreshList() end)
@@ -213,37 +202,67 @@ Tab("MAIN", 0, function() P_Main.Visible = true; P_Players.Visible = false; P_Mi
 Tab("PLAYERS", 45, function() P_Main.Visible = false; P_Players.Visible = true; P_Misc.Visible = false; RefreshList() end)
 Tab("MISC", 90, function() P_Main.Visible = false; P_Players.Visible = false; P_Misc.Visible = true end)
 
--- [[ AIM ENGINE ]]
+-- [[ FIXED AIM ENGINE ]]
 RunService.RenderStepped:Connect(function()
     if not ScriptRunning or not IsUnlocked then return end
+    
     if AimEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        -- Step 1: Check if current LockedTarget is still valid (Alive)
+        if LockedTarget then
+            local char = LockedTarget.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            
+            -- Kung wala nang character, humanoid, o HP <= 0, tanggalin ang lock
+            if not char or not hum or hum.Health <= 0 or not char:FindFirstChild("Head") then
+                LockedTarget = nil
+            end
+        end
+
+        -- Step 2: If no target or target just died, find a new one
         if not LockedTarget then
             local t, d = nil, AimFOV
             for _, v in pairs(Players:GetPlayers()) do
                 local isAlly = Allies[v.UserId] == true
-                if v ~= LocalPlayer and not isAlly and v.Character and v.Character:FindFirstChild("Head") then
-                    if IsVisible(v.Character.Head) then
-                        local pos, vis = Camera:WorldToViewportPoint(v.Character.Head.Position)
+                local char = v.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+                -- Target must be alive (Health > 0)
+                if v ~= LocalPlayer and not isAlly and char and char:FindFirstChild("Head") and hum and hum.Health > 0 then
+                    if IsVisible(char.Head) then
+                        local pos, vis = Camera:WorldToViewportPoint(char.Head.Position)
                         if vis then
                             local dist = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude
-                            if dist < d then d = dist; t = v end
+                            if dist < d then 
+                                d = dist
+                                t = v 
+                            end
                         end
                     end
                 end
             end
             LockedTarget = t
         end
+
+        -- Step 3: Aim at the target
         if LockedTarget and LockedTarget.Character and LockedTarget.Character:FindFirstChild("Head") then
             if IsVisible(LockedTarget.Character.Head) then
                 local FinalOffset = AimOffset
                 if AutoDistanceAdj and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
                     local dist = (LocalPlayer.Character.HumanoidRootPart.Position - LockedTarget.Character.Head.Position).Magnitude
-                    if dist > 25 then FinalOffset = AimOffset + ((dist - 25) * 0.048) end
+                    if dist > 25 then 
+                        FinalOffset = AimOffset + ((dist - 25) * 0.048) 
+                    end
                 end
+                
+                -- Dynamic Lerp for Smoothness
                 Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, LockedTarget.Character.Head.Position + Vector3.new(0, FinalOffset, 0)), AimSmoothness)
-            else LockedTarget = nil end
+            else 
+                LockedTarget = nil 
+            end
         end
-    else LockedTarget = nil end
+    else 
+        LockedTarget = nil 
+    end
 end)
 
 -- [[ FINAL LOGIC ]]
