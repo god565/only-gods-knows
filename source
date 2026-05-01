@@ -11,7 +11,7 @@ local AimEnabled, IsUnlocked, VisualsEnabled = false, false, false
 local WallCheckEnabled, IsMinimized = false, false
 local AutoDistanceAdj = true 
 local AimSmoothness, AimFOV, AimOffset = 0.5, 300, 1.4
-local Allies, IndividualESP = {}, {}
+local Allies, IndividualESP, ManualUnally = {}, {}, {} -- Added ManualUnally table
 local AllyAllActive = false
 local LockedTarget = nil
 local ScriptRunning = true
@@ -125,11 +125,6 @@ end
 
 -- [[ ESP ENGINE ]]
 local function HandleESP(p)
-    -- AUTO-ALLY LOGIC FOR NEW PLAYERS
-    if p ~= LocalPlayer and AllyAllActive then
-        Allies[p.UserId] = true
-    end
-
     RunService.RenderStepped:Connect(function()
         if not ScriptRunning or p == LocalPlayer then return end
         local char = p.Character
@@ -170,11 +165,38 @@ local ESPAllBtn = Instance.new("TextButton", P_Players); ESPAllBtn.Text = "ESP A
 local ListFrame = Instance.new("ScrollingFrame", P_Players); ListFrame.Size = UDim2.new(1, 0, 1, -45); ListFrame.Position = UDim2.new(0, 0, 0, 45); ListFrame.BackgroundTransparency = 1; ListFrame.AutomaticCanvasSize = "Y"
 Instance.new("UIListLayout", ListFrame).Padding = UDim.new(0, 5)
 
+-- UPDATED ALLY ALL LOGIC
 AllyAllBtn.MouseButton1Click:Connect(function() 
     AllyAllActive = not AllyAllActive
     AllyAllBtn.BackgroundColor3 = AllyAllActive and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
-    for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then Allies[p.UserId] = AllyAllActive end end 
+    
+    -- Kapag ni-restart yung Ally All, i-clear ang manual unally list
+    if AllyAllActive then
+        ManualUnally = {}
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then Allies[p.UserId] = true end
+        end
+    else
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then Allies[p.UserId] = false end
+        end
+    end
     RefreshList() 
+end)
+
+-- AUTO ALLY LOOP WITH BLACKLIST CHECK
+task.spawn(function()
+    while true do
+        if AllyAllActive then
+            for _, p in pairs(Players:GetPlayers()) do
+                -- I-ally lang kung: hindi sarili, wala sa manual unally list, at hindi pa ally
+                if p ~= LocalPlayer and not ManualUnally[p.UserId] and not Allies[p.UserId] then
+                    Allies[p.UserId] = true
+                end
+            end
+        end
+        task.wait(1)
+    end
 end)
 
 ESPAllBtn.MouseButton1Click:Connect(function() VisualsEnabled = not VisualsEnabled; ESPAllBtn.BackgroundColor3 = VisualsEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0); for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then IndividualESP[p.UserId] = VisualsEnabled end end RefreshList() end)
@@ -191,7 +213,19 @@ function RefreshList()
             end
             local isAlly = Allies[p.UserId] == true
             local isESP = IndividualESP[p.UserId] == true
-            btn("ALLY", 0.38, isAlly and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0), function() Allies[p.UserId] = not Allies[p.UserId]; RefreshList() end)
+            
+            -- UPDATED MANUAL ALLY BUTTON
+            btn("ALLY", 0.38, isAlly and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0), function() 
+                Allies[p.UserId] = not Allies[p.UserId]
+                -- Kung in-unally nang manual, ilagay sa blacklist para hindi ma-force ng loop
+                if not Allies[p.UserId] then
+                    ManualUnally[p.UserId] = true
+                else
+                    ManualUnally[p.UserId] = nil -- Alisin sa blacklist kung ni-re-ally manual
+                end
+                RefreshList() 
+            end)
+            
             btn("ESP", 0.50, isESP and Color3.fromRGB(0, 150, 150) or Color3.fromRGB(50, 50, 50), function() IndividualESP[p.UserId] = not IndividualESP[p.UserId]; RefreshList() end)
             btn("INV", 0.62, Color3.fromRGB(100, 0, 150), function() OpenInventory(p) end)
             local isViewing = (ViewingPlayer == p)
