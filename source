@@ -125,6 +125,11 @@ end
 
 -- [[ ESP ENGINE ]]
 local function HandleESP(p)
+    -- AUTO-ALLY LOGIC FOR NEW PLAYERS
+    if p ~= LocalPlayer and AllyAllActive then
+        Allies[p.UserId] = true
+    end
+
     RunService.RenderStepped:Connect(function()
         if not ScriptRunning or p == LocalPlayer then return end
         local char = p.Character
@@ -142,7 +147,12 @@ local function HandleESP(p)
         end
     end)
 end
-Players.PlayerAdded:Connect(HandleESP); for _, p in pairs(Players:GetPlayers()) do HandleESP(p) end
+
+Players.PlayerAdded:Connect(function(p)
+    HandleESP(p)
+    if P_Players.Visible then RefreshList() end
+end)
+for _, p in pairs(Players:GetPlayers()) do HandleESP(p) end
 
 -- [[ INVENTORY LOGIC ]]
 local function OpenInventory(p)
@@ -160,7 +170,13 @@ local ESPAllBtn = Instance.new("TextButton", P_Players); ESPAllBtn.Text = "ESP A
 local ListFrame = Instance.new("ScrollingFrame", P_Players); ListFrame.Size = UDim2.new(1, 0, 1, -45); ListFrame.Position = UDim2.new(0, 0, 0, 45); ListFrame.BackgroundTransparency = 1; ListFrame.AutomaticCanvasSize = "Y"
 Instance.new("UIListLayout", ListFrame).Padding = UDim.new(0, 5)
 
-AllyAllBtn.MouseButton1Click:Connect(function() AllyAllActive = not AllyAllActive; AllyAllBtn.BackgroundColor3 = AllyAllActive and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0); for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then Allies[p.UserId] = AllyAllActive end end RefreshList() end)
+AllyAllBtn.MouseButton1Click:Connect(function() 
+    AllyAllActive = not AllyAllActive
+    AllyAllBtn.BackgroundColor3 = AllyAllActive and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
+    for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then Allies[p.UserId] = AllyAllActive end end 
+    RefreshList() 
+end)
+
 ESPAllBtn.MouseButton1Click:Connect(function() VisualsEnabled = not VisualsEnabled; ESPAllBtn.BackgroundColor3 = VisualsEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0); for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then IndividualESP[p.UserId] = VisualsEnabled end end RefreshList() end)
 
 function RefreshList()
@@ -207,18 +223,14 @@ RunService.RenderStepped:Connect(function()
     if not ScriptRunning or not IsUnlocked then return end
     
     if AimEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-        -- Step 1: Check if current LockedTarget is still valid (Alive)
         if LockedTarget then
             local char = LockedTarget.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
-            
-            -- Kung wala nang character, humanoid, o HP <= 0, tanggalin ang lock
             if not char or not hum or hum.Health <= 0 or not char:FindFirstChild("Head") then
                 LockedTarget = nil
             end
         end
 
-        -- Step 2: If no target or target just died, find a new one
         if not LockedTarget then
             local t, d = nil, AimFOV
             for _, v in pairs(Players:GetPlayers()) do
@@ -226,7 +238,6 @@ RunService.RenderStepped:Connect(function()
                 local char = v.Character
                 local hum = char and char:FindFirstChildOfClass("Humanoid")
 
-                -- Target must be alive (Health > 0)
                 if v ~= LocalPlayer and not isAlly and char and char:FindFirstChild("Head") and hum and hum.Health > 0 then
                     if IsVisible(char.Head) then
                         local pos, vis = Camera:WorldToViewportPoint(char.Head.Position)
@@ -243,7 +254,6 @@ RunService.RenderStepped:Connect(function()
             LockedTarget = t
         end
 
-        -- Step 3: Aim at the target
         if LockedTarget and LockedTarget.Character and LockedTarget.Character:FindFirstChild("Head") then
             if IsVisible(LockedTarget.Character.Head) then
                 local FinalOffset = AimOffset
@@ -253,8 +263,6 @@ RunService.RenderStepped:Connect(function()
                         FinalOffset = AimOffset + ((dist - 25) * 0.048) 
                     end
                 end
-                
-                -- Dynamic Lerp for Smoothness
                 Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, LockedTarget.Character.Head.Position + Vector3.new(0, FinalOffset, 0)), AimSmoothness)
             else 
                 LockedTarget = nil 
