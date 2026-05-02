@@ -8,10 +8,10 @@ local Mouse = LocalPlayer:GetMouse()
 
 -- [[ CONFIG ]]
 local AimEnabled, IsUnlocked, VisualsEnabled = false, false, false
-local WallCheckEnabled, IsMinimized = false, false
+local WallCheckEnabled, IsMinimized, RapidFireEnabled = false, false, false 
 local AutoDistanceAdj = true 
 local AimSmoothness, AimFOV, AimOffset = 0.5, 300, 1.4
-local Allies, IndividualESP, ManualUnally = {}, {}, {} -- Added ManualUnally table
+local Allies, IndividualESP, ManualUnally = {}, {}, {} 
 local AllyAllActive = false
 local LockedTarget = nil
 local ScriptRunning = true
@@ -48,13 +48,9 @@ local ContentFrame = Instance.new("Frame", MainFrame); ContentFrame.Size = UDim2
 MinBtn.MouseButton1Click:Connect(function()
     IsMinimized = not IsMinimized
     if IsMinimized then
-        MainFrame:TweenSize(UDim2.new(0, 600, 0, 35), "Out", "Quint", 0.4, true)
-        ContentFrame.Visible = false
-        MinBtn.Text = "+"
+        MainFrame:TweenSize(UDim2.new(0, 600, 0, 35), "Out", "Quint", 0.4, true); ContentFrame.Visible = false; MinBtn.Text = "+"
     else
-        MainFrame:TweenSize(UDim2.new(0, 600, 0, 450), "Out", "Quint", 0.4, true)
-        ContentFrame.Visible = true
-        MinBtn.Text = "-"
+        MainFrame:TweenSize(UDim2.new(0, 600, 0, 450), "Out", "Quint", 0.4, true); ContentFrame.Visible = true; MinBtn.Text = "-"
     end
 end)
 
@@ -62,7 +58,7 @@ end)
 local Sidebar = Instance.new("Frame", ContentFrame); Sidebar.Size = UDim2.new(0, 130, 1, 0); Sidebar.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
 local Pages = Instance.new("Frame", ContentFrame); Pages.Size = UDim2.new(1, -140, 1, -10); Pages.Position = UDim2.new(0, 135, 0, 5); Pages.BackgroundTransparency = 1
 
-local P_Main = Instance.new("ScrollingFrame", Pages); P_Main.Size = UDim2.new(1,0,1,0); P_Main.BackgroundTransparency = 1; P_Main.CanvasSize = UDim2.new(0,0,2.2,0); P_Main.ScrollBarThickness = 3; P_Main.Visible = true
+local P_Main = Instance.new("ScrollingFrame", Pages); P_Main.Size = UDim2.new(1,0,1,0); P_Main.BackgroundTransparency = 1; P_Main.CanvasSize = UDim2.new(0,0,2.8,0); P_Main.ScrollBarThickness = 3; P_Main.Visible = true
 Instance.new("UIListLayout", P_Main).Padding = UDim.new(0, 10)
 
 local P_Players = Instance.new("Frame", Pages); P_Players.Size = UDim2.new(1,0,1,0); P_Players.BackgroundTransparency = 1; P_Players.Visible = false
@@ -81,44 +77,66 @@ end
 -- [[ MAIN TAB CONTENTS ]]
 CreateHeader("COMBAT FEATURES", P_Main)
 CreateToggle("AIMBOT", P_Main, function(v) AimEnabled = v end)
+CreateToggle("RAPID FIRE", P_Main, function(v) RapidFireEnabled = v end) 
 CreateHeader("VISUAL FEATURES", P_Main)
 CreateToggle("ALL ESP", P_Main, function(v) VisualsEnabled = v end)
 CreateHeader("SETTINGS", P_Main)
 CreateToggle("WALL CHECK", P_Main, function(v) WallCheckEnabled = v end)
 CreateToggle("AUTO DIST ADJ", P_Main, function(v) AutoDistanceAdj = v end, true)
 
-local StrBtn = Instance.new("TextButton", P_Main); StrBtn.Text = "STRENGTH: MEDIUM (0.5)"; StrBtn.Size = UDim2.new(0.9, 0, 0, 38); StrBtn.BackgroundColor3 = Color3.fromRGB(120, 0, 0); StrBtn.TextColor3 = Color3.new(1,1,1); StrBtn.Font = "GothamBold"; Instance.new("UICorner", StrBtn)
-StrBtn.MouseButton1Click:Connect(function()
-    if AimSmoothness == 0.2 then AimSmoothness = 0.5; StrBtn.Text = "STRENGTH: MEDIUM (0.5)"
-    elseif AimSmoothness == 0.5 then AimSmoothness = 1.0; StrBtn.Text = "STRENGTH: GOD (1.0)"
-    else AimSmoothness = 0.2; StrBtn.Text = "STRENGTH: LOW (0.2)" end
-end)
+-- [[ HYBRID STRENGTH SYSTEM ]]
+CreateHeader("AIM STRENGTH & PRESETS", P_Main)
+local StrengthSliderFrame = Instance.new("Frame", P_Main); StrengthSliderFrame.Size = UDim2.new(0.9, 0, 0, 50); StrengthSliderFrame.BackgroundTransparency = 1
+local StrengthLabel = Instance.new("TextLabel", StrengthSliderFrame); StrengthLabel.Text = "CUSTOM STRENGTH: 0.50"; StrengthLabel.Size = UDim2.new(1, 0, 0, 20); StrengthLabel.TextColor3 = Color3.new(1,1,1); StrengthLabel.BackgroundTransparency = 1; StrengthLabel.Font = "GothamBold"
+local StrengthBar = Instance.new("Frame", StrengthSliderFrame); StrengthBar.Size = UDim2.new(0.9, 0, 0, 6); StrengthBar.Position = UDim2.new(0.05, 0, 0.7, 0); StrengthBar.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
+local StrengthDot = Instance.new("TextButton", StrengthBar); StrengthDot.Text = ""; StrengthDot.Size = UDim2.new(0, 18, 0, 18); StrengthDot.Position = UDim2.new(0.5, -9, 0.5, -9); StrengthDot.BackgroundColor3 = Color3.fromRGB(255, 0, 0); Instance.new("UICorner", StrengthDot).CornerRadius = UDim.new(1,0)
 
+local function UpdateStrength(val)
+    AimSmoothness = math.clamp(val, 0, 1)
+    StrengthDot.Position = UDim2.new(AimSmoothness, -9, 0.5, -9)
+    StrengthLabel.Text = "CUSTOM STRENGTH: " .. string.format("%.2f", AimSmoothness)
+end
+
+local s_dragging = false
+StrengthDot.MouseButton1Down:Connect(function() s_dragging = true end)
+UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then s_dragging = false end end)
+RunService.RenderStepped:Connect(function() if s_dragging then local pos = math.clamp((UserInputService:GetMouseLocation().X - StrengthBar.AbsolutePosition.X) / StrengthBar.AbsoluteSize.X, 0, 1); UpdateStrength(pos) end end)
+
+local PresetFrame = Instance.new("Frame", P_Main); PresetFrame.Size = UDim2.new(0.9, 0, 0, 35); PresetFrame.BackgroundTransparency = 1
+local PL = Instance.new("UIListLayout", PresetFrame); PL.FillDirection = "Horizontal"; PL.Padding = UDim.new(0, 8); PL.HorizontalAlignment = "Center"
+local function CreatePreset(name, val, color)
+    local b = Instance.new("TextButton", PresetFrame); b.Text = name; b.Size = UDim2.new(0, 80, 1, 0); b.BackgroundColor3 = color; b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"; b.TextSize = 10; Instance.new("UICorner", b)
+    b.MouseButton1Click:Connect(function() UpdateStrength(val) end)
+end
+CreatePreset("LOW", 0.20, Color3.fromRGB(100, 0, 0))
+CreatePreset("MEDIUM", 0.50, Color3.fromRGB(180, 0, 0))
+CreatePreset("GOD", 1.00, Color3.fromRGB(255, 0, 0))
+
+-- [[ VERTICAL HEIGHT SYSTEM ]]
+CreateHeader("AIM HEIGHT CONTROL", P_Main)
 local SliderFrame = Instance.new("Frame", P_Main); SliderFrame.Size = UDim2.new(0.9, 0, 0, 60); SliderFrame.BackgroundTransparency = 1
 local SliderLabel = Instance.new("TextLabel", SliderFrame); SliderLabel.Text = "VERTICAL HEIGHT: 1.4"; SliderLabel.Size = UDim2.new(1, 0, 0, 20); SliderLabel.TextColor3 = Color3.new(1,1,1); SliderLabel.BackgroundTransparency = 1; SliderLabel.Font = "GothamBold"
 local SliderBar = Instance.new("Frame", SliderFrame); SliderBar.Size = UDim2.new(0.9, 0, 0, 6); SliderBar.Position = UDim2.new(0.05, 0, 0.7, 0); SliderBar.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
 local SliderDot = Instance.new("TextButton", SliderBar); SliderDot.Text = ""; SliderDot.Size = UDim2.new(0, 18, 0, 18); SliderDot.Position = UDim2.new(1.4/3, -9, 0.5, -9); SliderDot.BackgroundColor3 = Color3.fromRGB(255, 0, 0); Instance.new("UICorner", SliderDot).CornerRadius = UDim.new(1,0)
-local function UpdateSlider(val) AimOffset = val; SliderDot.Position = UDim2.new(val/3, -9, 0.5, -9); SliderLabel.Text = "VERTICAL HEIGHT: "..string.format("%.1f", val) end
+
+local function UpdateHeight(val) AimOffset = val; SliderDot.Position = UDim2.new(val/3, -9, 0.5, -9); SliderLabel.Text = "VERTICAL HEIGHT: "..string.format("%.1f", val) end
 local dragging = false; SliderDot.MouseButton1Down:Connect(function() dragging = true end)
 UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
-RunService.RenderStepped:Connect(function() if dragging then local pos = math.clamp((UserInputService:GetMouseLocation().X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1); UpdateSlider(pos * 3) end end)
+RunService.RenderStepped:Connect(function() if dragging then local pos = math.clamp((UserInputService:GetMouseLocation().X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1); UpdateHeight(pos * 3) end end)
 
 local RangeFrame = Instance.new("Frame", P_Main); RangeFrame.Size = UDim2.new(0.9, 0, 0, 40); RangeFrame.BackgroundTransparency = 1
-local RL = Instance.new("UIListLayout", RangeFrame); RL.FillDirection = "Horizontal"; RL.Padding = UDim.new(0,10)
+local RL = Instance.new("UIListLayout", RangeFrame); RL.FillDirection = "Horizontal"; RL.Padding = UDim.new(0,10); RL.HorizontalAlignment = "Center"
 local function rb(txt, val)
     local b = Instance.new("TextButton", RangeFrame); b.Text = txt; b.Size = UDim2.new(0, 120, 1, 0); b.BackgroundColor3 = Color3.fromRGB(150, 0, 0); b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"; Instance.new("UICorner", b)
-    b.MouseButton1Click:Connect(function() UpdateSlider(val) end)
+    b.MouseButton1Click:Connect(function() UpdateHeight(val) end)
 end
 rb("SHORT", 1.4); rb("LONG", 3.0)
 
 -- [[ WALL CHECK HELPER ]]
 local function IsVisible(targetPart)
     if not WallCheckEnabled then return true end
-    local rayParams = RaycastParams.new()
-    rayParams.FilterType = Enum.RaycastFilterType.Exclude
-    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
-    local origin = Camera.CFrame.Position
-    local direction = (targetPart.Position - origin).Unit * (targetPart.Position - origin).Magnitude
+    local rayParams = RaycastParams.new(); rayParams.FilterType = Enum.RaycastFilterType.Exclude; rayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+    local origin = Camera.CFrame.Position; local direction = (targetPart.Position - origin).Unit * (targetPart.Position - origin).Magnitude
     local result = workspace:Raycast(origin, direction, rayParams)
     return result == nil or result.Instance:IsDescendantOf(targetPart.Parent)
 end
@@ -131,10 +149,30 @@ local function HandleESP(p)
         if char and char:FindFirstChild("HumanoidRootPart") and (VisualsEnabled or IndividualESP[p.UserId]) then
             local hum = char:FindFirstChildOfClass("Humanoid")
             local isAlly = Allies[p.UserId] == true
-            local hl = char:FindFirstChild("ArthurHL") or Instance.new("Highlight", char); hl.Name = "ArthurHL"; hl.FillTransparency = 1
-            hl.OutlineColor = isAlly and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
+            
+            local hl = char:FindFirstChild("ArthurHL") or Instance.new("Highlight", char)
+            hl.Name = "ArthurHL"
+            hl.FillTransparency = 1 
+            
+            -- Outline Color Logic
+            if isAlly then
+                hl.OutlineColor = Color3.fromRGB(0, 255, 0)
+            else
+                hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+            end
+            
+            hl.OutlineTransparency = 0 
+            
             local bbu = char:FindFirstChild("ArthurESP") or Instance.new("BillboardGui", char); bbu.Name = "ArthurESP"; bbu.AlwaysOnTop = true; bbu.Size = UDim2.new(0, 200, 0, 50); bbu.Adornee = char.HumanoidRootPart; bbu.ExtentsOffset = Vector3.new(0, -3.8, 0)
-            local txt = bbu:FindFirstChild("Info") or Instance.new("TextLabel", bbu); txt.Name = "Info"; txt.BackgroundTransparency = 1; txt.Size = UDim2.new(1,0,1,0); txt.Font = "GothamBold"; txt.TextSize = 10; txt.TextColor3 = isAlly and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
+            local txt = bbu:FindFirstChild("Info") or Instance.new("TextLabel", bbu); txt.Name = "Info"; txt.BackgroundTransparency = 1; txt.Size = UDim2.new(1,0,1,0); txt.Font = "GothamBold"; txt.TextSize = 10; 
+            
+            -- UPDATED: Text Color Logic (Green if Ally, White if Enemy)
+            if isAlly then
+                txt.TextColor3 = Color3.fromRGB(0, 255, 0) 
+            else
+                txt.TextColor3 = Color3.fromRGB(255, 255, 255)
+            end
+            
             txt.Text = string.upper(p.Name) .. " | " .. (hum and math.floor(hum.Health) or "0") .. " HP"
         else
             if char and char:FindFirstChild("ArthurHL") then char.ArthurHL:Destroy() end
@@ -142,64 +180,14 @@ local function HandleESP(p)
         end
     end)
 end
-
-Players.PlayerAdded:Connect(function(p)
-    HandleESP(p)
-    if P_Players.Visible then RefreshList() end
-end)
 for _, p in pairs(Players:GetPlayers()) do HandleESP(p) end
+Players.PlayerAdded:Connect(HandleESP)
 
--- [[ INVENTORY LOGIC ]]
-local function OpenInventory(p)
-    for _, child in pairs(InvScroll:GetChildren()) do if child:IsA("TextLabel") then child:Destroy() end end
-    InvTitle.Text = p.Name.."'S INV"; InvFrame.Visible = true
-    local eq = p.Character and p.Character:FindFirstChildOfClass("Tool")
-    if eq then local t = Instance.new("TextLabel", InvScroll); t.Size = UDim2.new(1, 0, 0, 25); t.Text = "[EQUIPPED] "..eq.Name; t.TextColor3 = Color3.new(1, 1, 0); t.BackgroundTransparency = 1; t.Font = "GothamBold"; t.TextSize = 12 end
-    for _, item in pairs(p.Backpack:GetChildren()) do if item:IsA("Tool") then local t = Instance.new("TextLabel", InvScroll); t.Size = UDim2.new(1, 0, 0, 25); t.Text = item.Name; t.TextColor3 = Color3.new(1, 1, 1); t.BackgroundTransparency = 1; t.Font = "Gotham"; t.TextSize = 11 end end
-end
-
--- [[ PLAYERS TAB ]]
+-- [[ PLAYERS TAB LOGIC ]]
 local SearchBar = Instance.new("TextBox", P_Players); SearchBar.Size = UDim2.new(0.4, 0, 0, 35); SearchBar.PlaceholderText = "Search..."; SearchBar.BackgroundColor3 = Color3.fromRGB(20, 10, 10); SearchBar.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", SearchBar)
 local AllyAllBtn = Instance.new("TextButton", P_Players); AllyAllBtn.Text = "ALLY ALL"; AllyAllBtn.Size = UDim2.new(0.28, 0, 0, 35); AllyAllBtn.Position = UDim2.new(0.42, 0, 0, 0); AllyAllBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0); AllyAllBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", AllyAllBtn)
 local ESPAllBtn = Instance.new("TextButton", P_Players); ESPAllBtn.Text = "ESP ALL"; ESPAllBtn.Size = UDim2.new(0.28, 0, 0, 35); ESPAllBtn.Position = UDim2.new(0.72, 0, 0, 0); ESPAllBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0); ESPAllBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", ESPAllBtn)
-local ListFrame = Instance.new("ScrollingFrame", P_Players); ListFrame.Size = UDim2.new(1, 0, 1, -45); ListFrame.Position = UDim2.new(0, 0, 0, 45); ListFrame.BackgroundTransparency = 1; ListFrame.AutomaticCanvasSize = "Y"
-Instance.new("UIListLayout", ListFrame).Padding = UDim.new(0, 5)
-
--- UPDATED ALLY ALL LOGIC
-AllyAllBtn.MouseButton1Click:Connect(function() 
-    AllyAllActive = not AllyAllActive
-    AllyAllBtn.BackgroundColor3 = AllyAllActive and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
-    
-    -- Kapag ni-restart yung Ally All, i-clear ang manual unally list
-    if AllyAllActive then
-        ManualUnally = {}
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer then Allies[p.UserId] = true end
-        end
-    else
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer then Allies[p.UserId] = false end
-        end
-    end
-    RefreshList() 
-end)
-
--- AUTO ALLY LOOP WITH BLACKLIST CHECK
-task.spawn(function()
-    while true do
-        if AllyAllActive then
-            for _, p in pairs(Players:GetPlayers()) do
-                -- I-ally lang kung: hindi sarili, wala sa manual unally list, at hindi pa ally
-                if p ~= LocalPlayer and not ManualUnally[p.UserId] and not Allies[p.UserId] then
-                    Allies[p.UserId] = true
-                end
-            end
-        end
-        task.wait(1)
-    end
-end)
-
-ESPAllBtn.MouseButton1Click:Connect(function() VisualsEnabled = not VisualsEnabled; ESPAllBtn.BackgroundColor3 = VisualsEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0); for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then IndividualESP[p.UserId] = VisualsEnabled end end RefreshList() end)
+local ListFrame = Instance.new("ScrollingFrame", P_Players); ListFrame.Size = UDim2.new(1, 0, 1, -45); ListFrame.Position = UDim2.new(0, 0, 0, 45); ListFrame.BackgroundTransparency = 1; ListFrame.AutomaticCanvasSize = "Y"; Instance.new("UIListLayout", ListFrame).Padding = UDim.new(0, 5)
 
 function RefreshList()
     for _, item in pairs(ListFrame:GetChildren()) do if item:IsA("Frame") then item:Destroy() end end
@@ -211,29 +199,24 @@ function RefreshList()
             local function btn(txt, x, col, cb)
                 local b = Instance.new("TextButton", f); b.Text = txt; b.Size = UDim2.new(0, 32, 0, 22); b.Position = UDim2.new(x, 0, 0.5, -11); b.BackgroundColor3 = col; b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"; b.TextSize = 7; Instance.new("UICorner", b); b.MouseButton1Click:Connect(cb)
             end
-            local isAlly = Allies[p.UserId] == true
-            local isESP = IndividualESP[p.UserId] == true
-            
-            -- UPDATED MANUAL ALLY BUTTON
-            btn("ALLY", 0.38, isAlly and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0), function() 
-                Allies[p.UserId] = not Allies[p.UserId]
-                -- Kung in-unally nang manual, ilagay sa blacklist para hindi ma-force ng loop
-                if not Allies[p.UserId] then
-                    ManualUnally[p.UserId] = true
-                else
-                    ManualUnally[p.UserId] = nil -- Alisin sa blacklist kung ni-re-ally manual
-                end
-                RefreshList() 
-            end)
-            
+            local isAlly = Allies[p.UserId] == true; local isESP = IndividualESP[p.UserId] == true
+            btn("ALLY", 0.38, isAlly and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0), function() Allies[p.UserId] = not Allies[p.UserId]; if not Allies[p.UserId] then ManualUnally[p.UserId] = true else ManualUnally[p.UserId] = nil end; RefreshList() end)
             btn("ESP", 0.50, isESP and Color3.fromRGB(0, 150, 150) or Color3.fromRGB(50, 50, 50), function() IndividualESP[p.UserId] = not IndividualESP[p.UserId]; RefreshList() end)
-            btn("INV", 0.62, Color3.fromRGB(100, 0, 150), function() OpenInventory(p) end)
-            local isViewing = (ViewingPlayer == p)
-            btn("VIEW", 0.74, isViewing and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0), function() if ViewingPlayer == p then ViewingPlayer = nil Camera.CameraSubject = LocalPlayer.Character:FindFirstChild("Humanoid") else if p.Character and p.Character:FindFirstChild("Humanoid") then ViewingPlayer = p Camera.CameraSubject = p.Character.Humanoid end end RefreshList() end)
+            btn("INV", 0.62, Color3.fromRGB(100, 0, 150), function() 
+                for _, child in pairs(InvScroll:GetChildren()) do if child:IsA("TextLabel") then child:Destroy() end end
+                InvTitle.Text = p.Name.."'S INV"; InvFrame.Visible = true; local eq = p.Character and p.Character:FindFirstChildOfClass("Tool")
+                if eq then local t = Instance.new("TextLabel", InvScroll); t.Size = UDim2.new(1, 0, 0, 25); t.Text = "[EQUIPPED] "..eq.Name; t.TextColor3 = Color3.new(1, 1, 0); t.BackgroundTransparency = 1; t.Font = "GothamBold"; t.TextSize = 12 end
+                for _, item in pairs(p.Backpack:GetChildren()) do if item:IsA("Tool") then local t = Instance.new("TextLabel", InvScroll); t.Size = UDim2.new(1, 0, 0, 25); t.Text = item.Name; t.TextColor3 = Color3.new(1, 1, 1); t.BackgroundTransparency = 1; t.Font = "Gotham"; t.TextSize = 11 end end
+            end)
+            btn("VIEW", 0.74, ViewingPlayer == p and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0), function() if ViewingPlayer == p then ViewingPlayer = nil; Camera.CameraSubject = LocalPlayer.Character.Humanoid else ViewingPlayer = p; Camera.CameraSubject = p.Character.Humanoid end; RefreshList() end)
             btn("GOTO", 0.86, Color3.fromRGB(40, 40, 40), function() LocalPlayer.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame end)
         end
     end
 end
+
+AllyAllBtn.MouseButton1Click:Connect(function() AllyAllActive = not AllyAllActive; AllyAllBtn.BackgroundColor3 = AllyAllActive and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0); if AllyAllActive then ManualUnally = {}; for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then Allies[p.UserId] = true end end else for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then Allies[p.UserId] = false end end end; RefreshList() end)
+ESPAllBtn.MouseButton1Click:Connect(function() VisualsEnabled = not VisualsEnabled; ESPAllBtn.BackgroundColor3 = VisualsEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0); for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then IndividualESP[p.UserId] = VisualsEnabled end end; RefreshList() end)
+task.spawn(function() while true do if AllyAllActive then for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer and not ManualUnally[p.UserId] and not Allies[p.UserId] then Allies[p.UserId] = true end end end; task.wait(1) end end)
 
 -- [[ MISC TAB ]]
 local function QuickBtn(txt, url)
@@ -252,59 +235,48 @@ Tab("MAIN", 0, function() P_Main.Visible = true; P_Players.Visible = false; P_Mi
 Tab("PLAYERS", 45, function() P_Main.Visible = false; P_Players.Visible = true; P_Misc.Visible = false; RefreshList() end)
 Tab("MISC", 90, function() P_Main.Visible = false; P_Players.Visible = false; P_Misc.Visible = true end)
 
--- [[ FIXED AIM ENGINE ]]
+-- [[ AIM & RAPID FIRE ENGINE ]]
 RunService.RenderStepped:Connect(function()
     if not ScriptRunning or not IsUnlocked then return end
-    
-    if AimEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-        if LockedTarget then
-            local char = LockedTarget.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if not char or not hum or hum.Health <= 0 or not char:FindFirstChild("Head") then
-                LockedTarget = nil
+
+    if RapidFireEnabled then
+        local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if tool and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+            local event = tool:FindFirstChild("RemoteEvent") or tool:FindFirstChildOfClass("RemoteEvent") or tool:FindFirstChild("Shoot")
+            if event then
+                for i = 1, 10 do 
+                    task.spawn(function()
+                        event:FireServer(Mouse.Hit.Position)
+                    end)
+                end
             end
         end
+    end
 
+    if AimEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        if LockedTarget then
+            local char = LockedTarget.Character; local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if not char or not hum or hum.Health <= 0 or not char:FindFirstChild("Head") or not IsVisible(char.Head) then LockedTarget = nil end
+        end
         if not LockedTarget then
             local t, d = nil, AimFOV
             for _, v in pairs(Players:GetPlayers()) do
-                local isAlly = Allies[v.UserId] == true
-                local char = v.Character
-                local hum = char and char:FindFirstChildOfClass("Humanoid")
-
-                if v ~= LocalPlayer and not isAlly and char and char:FindFirstChild("Head") and hum and hum.Health > 0 then
-                    if IsVisible(char.Head) then
-                        local pos, vis = Camera:WorldToViewportPoint(char.Head.Position)
-                        if vis then
-                            local dist = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude
-                            if dist < d then 
-                                d = dist
-                                t = v 
-                            end
-                        end
-                    end
+                if v ~= LocalPlayer and not Allies[v.UserId] and v.Character and v.Character:FindFirstChild("Head") and v.Character.Humanoid.Health > 0 and IsVisible(v.Character.Head) then
+                    local pos, vis = Camera:WorldToViewportPoint(v.Character.Head.Position)
+                    if vis then local dist = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude; if dist < d then d = dist; t = v end end
                 end
             end
             LockedTarget = t
         end
-
         if LockedTarget and LockedTarget.Character and LockedTarget.Character:FindFirstChild("Head") then
-            if IsVisible(LockedTarget.Character.Head) then
-                local FinalOffset = AimOffset
-                if AutoDistanceAdj and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local dist = (LocalPlayer.Character.HumanoidRootPart.Position - LockedTarget.Character.Head.Position).Magnitude
-                    if dist > 25 then 
-                        FinalOffset = AimOffset + ((dist - 25) * 0.048) 
-                    end
-                end
-                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, LockedTarget.Character.Head.Position + Vector3.new(0, FinalOffset, 0)), AimSmoothness)
-            else 
-                LockedTarget = nil 
+            local FinalOffset = AimOffset
+            if AutoDistanceAdj and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local dist = (LocalPlayer.Character.HumanoidRootPart.Position - LockedTarget.Character.Head.Position).Magnitude
+                if dist > 25 then FinalOffset = AimOffset + ((dist - 25) * 0.048) end
             end
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, LockedTarget.Character.Head.Position + Vector3.new(0, FinalOffset, 0)), AimSmoothness)
         end
-    else 
-        LockedTarget = nil 
-    end
+    else LockedTarget = nil end
 end)
 
 -- [[ FINAL LOGIC ]]
@@ -314,9 +286,4 @@ LoginBtn.MouseButton1Click:Connect(function()
     local Keys = {["peng_ARTHUR_SPECIAL"] = true, ["yole_SELDA_RP_KING"] = true, ["unknown_99102384"] = true}
     if Keys[PassBox.Text] then IsUnlocked = true; LoginContainer:Destroy(); MainFrame.Visible = true else PassBox.Text = ""; PassBox.PlaceholderText = "Invalid Key!" end
 end)
-
-UserInputService.InputBegan:Connect(function(i, g) 
-    if not g and i.KeyCode == Enum.KeyCode.K and IsUnlocked then 
-        MainFrame.Visible = not MainFrame.Visible 
-    end 
-end)
+UserInputService.InputBegan:Connect(function(i, g) if not g and i.KeyCode == Enum.KeyCode.K and IsUnlocked then MainFrame.Visible = not MainFrame.Visible end end)
