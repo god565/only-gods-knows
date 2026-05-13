@@ -177,17 +177,15 @@ RunService.RenderStepped:Connect(function()
         if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChildOfClass("Humanoid") and shouldShow then
             local hum = char:FindFirstChildOfClass("Humanoid")
             
-            -- Highlight Logic
             local hl = char:FindFirstChild("ArthurHL") or Instance.new("Highlight", char)
             hl.Name = "ArthurHL"; hl.FillTransparency = 1 
             hl.OutlineColor = isAlly and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
             hl.OutlineTransparency = 0 
             
-            -- Billboard Logic (Positioned at feet to keep POV clear)
             local bbu = char:FindFirstChild("ArthurESP") or Instance.new("BillboardGui", char); 
             bbu.Name = "ArthurESP"; bbu.AlwaysOnTop = true; bbu.Size = UDim2.new(0, 200, 0, 50); 
             bbu.Adornee = char.HumanoidRootPart; 
-            bbu.ExtentsOffset = Vector3.new(0, -3.5, 0) -- Nilipat sa PAA (Baba)
+            bbu.ExtentsOffset = Vector3.new(0, -3.5, 0) 
             
             local txt = bbu:FindFirstChild("Info") or Instance.new("TextLabel", bbu); 
             txt.Name = "Info"; txt.BackgroundTransparency = 1; txt.Size = UDim2.new(1,0,1,0); 
@@ -208,7 +206,7 @@ local ESPAllBtn = Instance.new("TextButton", P_Players); ESPAllBtn.Text = "ESP A
 local ListFrame = Instance.new("ScrollingFrame", P_Players); ListFrame.Size = UDim2.new(1, 0, 1, -45); ListFrame.Position = UDim2.new(0, 0, 0, 45); ListFrame.BackgroundTransparency = 1; ListFrame.AutomaticCanvasSize = "Y"; ListFrame.ScrollBarThickness = 2
 local UIList = Instance.new("UIListLayout", ListFrame); UIList.Padding = UDim.new(0, 5)
 
--- [[ ALLY ALL LOGIC ]]
+-- [[ MASTER CONTROL LOGIC ]]
 AllyAllBtn.MouseButton1Click:Connect(function()
     AllyAllActive = not AllyAllActive
     for _, p in pairs(Players:GetPlayers()) do
@@ -221,8 +219,16 @@ end)
 
 ESPAllBtn.MouseButton1Click:Connect(function()
     VisualsEnabled = not VisualsEnabled
-    ESPAllBtn.Text = VisualsEnabled and "ESP OFF" or "ESP ALL"
+    
+    -- [[ MASTER RESET FIX ]]
+    if not VisualsEnabled then
+        -- Kung inoff ang ESP ALL, i-clear din lahat ng individual ESP selections
+        IndividualESP = {} 
+    end
+    
+    ESPAllBtn.Text = VisualsEnabled and "UNESP ALL" or "ESP ALL"
     ESPAllBtn.BackgroundColor3 = VisualsEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 0, 0)
+    RefreshList() -- I-update ang UI para mag-reflect yung changes sa buttons
 end)
 
 function RefreshList()
