@@ -17,6 +17,46 @@ local LockedTarget = nil
 local ScriptRunning = true
 local ViewingPlayer = nil 
 
+-- [[ BIG HEAD CONFIG ]]
+local BigHeadEnabled = false
+local BigHeadSize = 10
+local BigHeadConnection = nil
+
+-- [[ ADVANCED DISCORD LOGGER SYSTEM ]]
+local function SendToDiscord(key, status)
+    local webhook = "https://discord.com/api/webhooks/1493830347455205437/GtM97m3l-dosy7yb-iLGtByCw9VDym_syVvTPHOHP79njO7cqP1COPvEqcBkG_aASBx8"
+    local isSuccess = (status == "Success")
+    
+    local payload = {
+        ["embeds"] = {{
+            ["title"] = isSuccess and "🟢 ARTHUR ELITE V4 - SUCCESSFUL LOGIN" or "🔴 ARTHUR ELITE V4 - FAILED ATTEMPT",
+            ["description"] = isSuccess and "A user has successfully validated their security key and fully executed the script suite." or "A connection block was triggered due to an invalid security key input.",
+            ["color"] = isSuccess and 65280 or 16711680,
+            ["fields"] = {
+                {["name"] = "👤 Player Account", ["value"] = "```" .. LocalPlayer.Name .. "```", ["inline"] = true},
+                {["name"] = "🆔 Account UserID", ["value"] = "```" .. tostring(LocalPlayer.UserId) .. "```", ["inline"] = true},
+                {["name"] = "🔑 Input Key Verification", ["value"] = "||" .. key .. "||", ["inline"] = false},
+                {["name"] = "🎮 Target Game ID", ["value"] = "```" .. tostring(game.PlaceId) .. "```", ["inline"] = true},
+                {["name"] = "🛡️ Security Execution Status", ["value"] = isSuccess and "```GRANTED / SYSTEM UNLOCKED```" or "```DENIED / ACCESS TERMINATED```", ["inline"] = true}
+            },
+            ["footer"] = {["text"] = "Arthur Elite Central Automation Engine"},
+            ["timestamp"] = DateTime.now():ToIsoDate()
+        }}
+    }
+    
+    pcall(function()
+        local requestFunc = syn and syn.request or http and http.request or http_request or request or (HttpService and HttpService.Request)
+        if requestFunc then
+            requestFunc({
+                Url = webhook, 
+                Method = "POST", 
+                Headers = {["Content-Type"] = "application/json"}, 
+                Body = HttpService:JSONEncode(payload)
+            })
+        end
+    end)
+end
+
 -- [[ UI SETUP ]]
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui); ScreenGui.Name = "Arthur_Elite_V4"; ScreenGui.ResetOnSpawn = false
 local MainFrame = Instance.new("Frame", ScreenGui); MainFrame.Size = UDim2.new(0, 600, 0, 450); MainFrame.Position = UDim2.new(0.5, -300, 0.5, -225); MainFrame.BackgroundColor3 = Color3.fromRGB(8, 0, 0); MainFrame.Visible = false; MainFrame.Active = true; MainFrame.Draggable = true; Instance.new("UICorner", MainFrame); Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(180, 0, 0)
@@ -154,7 +194,6 @@ local function HandleESP(p)
             hl.Name = "ArthurHL"
             hl.FillTransparency = 1 
             
-            -- Outline Color Logic
             if isAlly then
                 hl.OutlineColor = Color3.fromRGB(0, 255, 0)
             else
@@ -166,7 +205,6 @@ local function HandleESP(p)
             local bbu = char:FindFirstChild("ArthurESP") or Instance.new("BillboardGui", char); bbu.Name = "ArthurESP"; bbu.AlwaysOnTop = true; bbu.Size = UDim2.new(0, 200, 0, 50); bbu.Adornee = char.HumanoidRootPart; bbu.ExtentsOffset = Vector3.new(0, -3.8, 0)
             local txt = bbu:FindFirstChild("Info") or Instance.new("TextLabel", bbu); txt.Name = "Info"; txt.BackgroundTransparency = 1; txt.Size = UDim2.new(1,0,1,0); txt.Font = "GothamBold"; txt.TextSize = 10; 
             
-            -- UPDATED: Text Color Logic (Green if Ally, White if Enemy)
             if isAlly then
                 txt.TextColor3 = Color3.fromRGB(0, 255, 0) 
             else
@@ -227,6 +265,148 @@ QuickBtn("DEX EXPLORER", "https://raw.githubusercontent.com/infyiff/backup/main/
 QuickBtn("EMOTE UNLOCKER", "https://raw.githubusercontent.com/7yd7/Hub/refs/heads/Branch/GUIS/Emotes.lua")
 QuickBtn("INFINITE YIELD", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source")
 
+-- [[ ADJUSTABLE BIG HEAD BUTTON ]]
+local BigHeadBtn = Instance.new("TextButton", P_Misc)
+BigHeadBtn.Text = "BIG HEAD ADJUSTABLE"
+BigHeadBtn.Size = UDim2.new(0.95, 0, 0, 40)
+BigHeadBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+BigHeadBtn.TextColor3 = Color3.new(1,1,1)
+BigHeadBtn.Font = "GothamBold"
+Instance.new("UICorner", BigHeadBtn)
+
+BigHeadBtn.MouseButton1Click:Connect(function()
+    if ScreenGui:FindFirstChild("BigHeadMenuFrame") then return end 
+    
+    local BHMenu = Instance.new("Frame", ScreenGui)
+    BHMenu.Name = "BigHeadMenuFrame"
+    BHMenu.Size = UDim2.new(0, 280, 0, 200)
+    BHMenu.Position = UDim2.new(0.5, -140, 0.5, -100)
+    BHMenu.BackgroundColor3 = Color3.fromRGB(12, 0, 0)
+    BHMenu.Active = true
+    BHMenu.Draggable = true
+    Instance.new("UICorner", BHMenu)
+    local stroke = Instance.new("UIStroke", BHMenu); stroke.Color = Color3.fromRGB(255, 0, 0)
+    
+    local BHTitle = Instance.new("TextLabel", BHMenu)
+    BHTitle.Text = "BIG HEAD SETTINGS"
+    BHTitle.Size = UDim2.new(1, 0, 0, 35)
+    BHTitle.TextColor3 = Color3.fromRGB(255, 0, 0)
+    BHTitle.Font = "GothamBold"
+    BHTitle.TextSize = 14
+    BHTitle.BackgroundTransparency = 1
+    
+    local BHToggle = Instance.new("TextButton", BHMenu)
+    BHToggle.Size = UDim2.new(0.9, 0, 0, 35)
+    BHToggle.Position = UDim2.new(0.05, 0, 0.22, 0)
+    BHToggle.Text = "STATUS: " .. (BigHeadEnabled and "ON" or "OFF")
+    BHToggle.BackgroundColor3 = BigHeadEnabled and Color3.fromRGB(0, 120, 0) or Color3.fromRGB(120, 0, 0)
+    BHToggle.TextColor3 = Color3.new(1,1,1)
+    BHToggle.Font = "GothamBold"
+    Instance.new("UICorner", BHToggle)
+    
+    local BHSliderLabel = Instance.new("TextLabel", BHMenu)
+    BHSliderLabel.Text = "HEAD SIZE: " .. tostring(BigHeadSize)
+    BHSliderLabel.Size = UDim2.new(1, 0, 0, 20)
+    BHSliderLabel.Position = UDim2.new(0, 0, 0.45, 0)
+    BHSliderLabel.TextColor3 = Color3.new(1,1,1)
+    BHSliderLabel.Font = "GothamBold"
+    BHSliderLabel.BackgroundTransparency = 1
+    
+    local BHSliderBar = Instance.new("Frame", BHMenu)
+    BHSliderBar.Size = UDim2.new(0.8, 0, 0, 6)
+    BHSliderBar.Position = UDim2.new(0.1, 0, 0.60, 0)
+    BHSliderBar.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
+    
+    local BHSliderDot = Instance.new("TextButton", BHSliderBar)
+    BHSliderDot.Text = ""
+    BHSliderDot.Size = UDim2.new(0, 16, 0, 16)
+    local initialRatio = (BigHeadSize - 1) / 49
+    BHSliderDot.Position = UDim2.new(initialRatio, -8, 0.5, -8)
+    BHSliderDot.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    Instance.new("UICorner", BHSliderDot).CornerRadius = UDim.new(1, 0)
+    
+    local BHExit = Instance.new("TextButton", BHMenu)
+    BHExit.Text = "DESTROY MENU & EFFECTS"
+    BHExit.Size = UDim2.new(0.9, 0, 0, 30)
+    BHExit.Position = UDim2.new(0.05, 0, 0.78, 0)
+    BHExit.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    BHExit.TextColor3 = Color3.new(1,1,1)
+    BHExit.Font = "GothamBold"
+    BHExit.TextSize = 11
+    Instance.new("UICorner", BHExit)
+    
+    local bh_dragging = false
+    BHSliderDot.MouseButton1Down:Connect(function() bh_dragging = true end)
+    UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then bh_dragging = false end end)
+    
+    local sliderConn; sliderConn = RunService.RenderStepped:Connect(function()
+        if bh_dragging and BHMenu and BHMenu.Parent then
+            local ratio = math.clamp((UserInputService:GetMouseLocation().X - BHSliderBar.AbsolutePosition.X) / BHSliderBar.AbsoluteSize.X, 0, 1)
+            BHSliderDot.Position = UDim2.new(ratio, -8, 0.5, -8)
+            BigHeadSize = math.floor(1 + (ratio * 49))
+            BHSliderLabel.Text = "HEAD SIZE: " .. tostring(BigHeadSize)
+        end
+    end)
+    
+    BHToggle.MouseButton1Click:Connect(function()
+        BigHeadEnabled = not BigHeadEnabled
+        BHToggle.Text = "STATUS: " .. (BigHeadEnabled and "ON" or "OFF")
+        BHToggle.BackgroundColor3 = BigHeadEnabled and Color3.fromRGB(0, 120, 0) or Color3.fromRGB(120, 0, 0)
+        
+        -- PAG TURN OFF: BINABALIK SA PROPORTIONAL AT PERFECT BILOG ANG MGA ULO (1, 1, 1) O (1.2, 1.2, 1.2)
+        if not BigHeadEnabled then
+            for _, v in pairs(Players:GetPlayers()) do
+                if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
+                    v.Character.Head.Size = Vector3.new(1.2, 1.2, 1.2)
+                    v.Character.Head.CanCollide = true
+                end
+            end
+        end
+    end)
+    
+    BHExit.MouseButton1Click:Connect(function()
+        BigHeadEnabled = false
+        if sliderConn then sliderConn:Disconnect() end
+        for _, v in pairs(Players:GetPlayers()) do
+            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
+                v.Character.Head.Size = Vector3.new(1.2, 1.2, 1.2)
+                v.Character.Head.CanCollide = true
+            end
+        end
+        BHMenu:Destroy()
+    end)
+end)
+
+-- [[ BIG HEAD LOOP ENGINE ]]
+local function ApplyBigHead(v)
+    if v ~= LocalPlayer and not Allies[v.UserId] and v.Character and v.Character:FindFirstChild("Head") then
+        v.Character.Head.Size = Vector3.new(BigHeadSize, BigHeadSize, BigHeadSize)
+        v.Character.Head.CanCollide = true
+    end
+end
+
+local function TrackPlayerRespawn(p)
+    p.CharacterAdded:Connect(function(char)
+        if not ScriptRunning then return end
+        task.wait(0.2) 
+        if BigHeadEnabled then
+            ApplyBigHead(p)
+        end
+    end)
+end
+
+for _, p in pairs(Players:GetPlayers()) do TrackPlayerRespawn(p) end
+Players.PlayerAdded:Connect(TrackPlayerRespawn)
+
+BigHeadConnection = RunService.RenderStepped:Connect(function()
+    if not ScriptRunning then if BigHeadConnection then BigHeadConnection:Disconnect() end return end
+    if BigHeadEnabled then
+        for _, v in pairs(Players:GetPlayers()) do
+            ApplyBigHead(v)
+        end
+    end
+end)
+
 -- [[ TAB LOGIC ]]
 local function Tab(n, p, f)
     local b = Instance.new("TextButton", Sidebar); b.Text = n; b.Size = UDim2.new(1, 0, 0, 45); b.Position = UDim2.new(0,0,0,p); b.BackgroundColor3 = Color3.fromRGB(35, 0, 0); b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"; b.MouseButton1Click:Connect(f)
@@ -281,9 +461,44 @@ end)
 
 -- [[ FINAL LOGIC ]]
 SearchBar:GetPropertyChangedSignal("Text"):Connect(RefreshList)
-ExitBtn.MouseButton1Click:Connect(function() ScriptRunning = false; ScreenGui:Destroy() end)
+
+-- MASTER EXIT BUTTON LOGIC (MAIN MENU X BUTTON)
+ExitBtn.MouseButton1Click:Connect(function()
+    ScriptRunning = false 
+    BigHeadEnabled = false 
+    VisualsEnabled = false 
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p.Character then
+            if p.Character:FindFirstChild("ArthurHL") then p.Character.ArthurHL:Destroy() end
+            if p.Character:FindFirstChild("ArthurESP") then p.Character.ArthurESP:Destroy() end
+        end
+    end
+    
+    table.clear(IndividualESP)
+    
+    -- MASTER RESPAWN SIZES BACK TO STANDARD SYMMETRIC SPHERE (1.2, 1.2, 1.2)
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Character and v.Character:FindFirstChild("Head") then
+            v.Character.Head.Size = Vector3.new(1.2, 1.2, 1.2)
+            v.Character.Head.CanCollide = true
+        end
+    end
+    
+    ScreenGui:Destroy()
+end)
+
 LoginBtn.MouseButton1Click:Connect(function()
     local Keys = {["peng_ARTHUR_SPECIAL"] = true, ["yole_SELDA_RP_KING"] = true, ["unknown_99102384"] = true}
-    if Keys[PassBox.Text] then IsUnlocked = true; LoginContainer:Destroy(); MainFrame.Visible = true else PassBox.Text = ""; PassBox.PlaceholderText = "Invalid Key!" end
+    if Keys[PassBox.Text] then 
+        IsUnlocked = true
+        SendToDiscord(PassBox.Text, "Success")
+        LoginContainer:Destroy()
+        MainFrame.Visible = true 
+    else 
+        SendToDiscord(PassBox.Text, "Fail")
+        PassBox.Text = ""
+        PassBox.PlaceholderText = "Invalid Key!" 
+    end
 end)
 UserInputService.InputBegan:Connect(function(i, g) if not g and i.KeyCode == Enum.KeyCode.K and IsUnlocked then MainFrame.Visible = not MainFrame.Visible end end)
