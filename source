@@ -499,14 +499,14 @@ ExitBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- [[ CLEAN ALPHANUMERIC SECURITY KEY ARRAY ]]
+-- [[ SUPER SHORT AND SIMPLE KEYS ]]
 LoginBtn.MouseButton1Click:Connect(function()
     local Keys = {
-        ["ArthurElite4X97Aef12"] = true,
-        ["SeldaKingV4M920Xzb"] = true,
-        ["EliteSuited71A8kPw2"] = true,
-        ["ArthurX289KmvPqz90"] = true,
-        ["CentralEngine71V8bN"] = true,
+        ["art1"] = true,
+        ["art2"] = true,
+        ["art3"] = true,
+        ["art4"] = true,
+        ["art5"] = true,
         ["thegodkey_092378451234"] = true
     }
     
