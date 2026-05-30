@@ -499,14 +499,14 @@ ExitBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- [[ UPDATED SECURITY KEY ARRAY WITH HIGH-ENTROPY VARIATIONS ]]
+-- [[ CLEAN ALPHANUMERIC SECURITY KEY ARRAY ]]
 LoginBtn.MouseButton1Click:Connect(function()
     local Keys = {
-        ["K9x#mP2!vL7$zQf9_wR1bA8*jE4^tY6"] = true,
-        ["bF5@hN9%mK3(xZ1_qW8&pD4#vS7$rL2"] = true,
-        ["zP3#tX7$vM1_kL9&fR2^qB5*jE8(wN4"] = true,
-        ["mK8$vL2_qW7&pD3#vS9%mK1(xZ5@hN4"] = true,
-        ["xZ1_qW8&pD4#vS7$rL2%mK3(xZ9@hN5"] = true,
+        ["ArthurElite4X97Aef12"] = true,
+        ["SeldaKingV4M920Xzb"] = true,
+        ["EliteSuited71A8kPw2"] = true,
+        ["ArthurX289KmvPqz90"] = true,
+        ["CentralEngine71V8bN"] = true,
         ["thegodkey_092378451234"] = true
     }
     
