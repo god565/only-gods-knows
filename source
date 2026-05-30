@@ -353,7 +353,6 @@ BigHeadBtn.MouseButton1Click:Connect(function()
         BHToggle.Text = "STATUS: " .. (BigHeadEnabled and "ON" or "OFF")
         BHToggle.BackgroundColor3 = BigHeadEnabled and Color3.fromRGB(0, 120, 0) or Color3.fromRGB(120, 0, 0)
         
-        -- PAG TURN OFF: BINABALIK SA PROPORTIONAL AT PERFECT BILOG ANG MGA ULO (1, 1, 1) O (1.2, 1.2, 1.2)
         if not BigHeadEnabled then
             for _, v in pairs(Players:GetPlayers()) do
                 if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
@@ -415,7 +414,7 @@ Tab("MAIN", 0, function() P_Main.Visible = true; P_Players.Visible = false; P_Mi
 Tab("PLAYERS", 45, function() P_Main.Visible = false; P_Players.Visible = true; P_Misc.Visible = false; RefreshList() end)
 Tab("MISC", 90, function() P_Main.Visible = false; P_Players.Visible = false; P_Misc.Visible = true end)
 
--- [[ AIM & RAPID FIRE ENGINE ]]
+-- [[ AIM & RAPID FIRE ENGINE (WITH STICKY FOCUS & OBSTRUCTION BYPASS) ]]
 RunService.RenderStepped:Connect(function()
     if not ScriptRunning or not IsUnlocked then return end
 
@@ -435,19 +434,30 @@ RunService.RenderStepped:Connect(function()
 
     if AimEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
         if LockedTarget then
-            local char = LockedTarget.Character; local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if not char or not hum or hum.Health <= 0 or not char:FindFirstChild("Head") or not IsVisible(char.Head) then LockedTarget = nil end
+            local char = LockedTarget.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if not char or not hum or hum.Health <= 0 or not char:FindFirstChild("Head") then 
+                LockedTarget = nil 
+            end
         end
+        
         if not LockedTarget then
             local t, d = nil, AimFOV
             for _, v in pairs(Players:GetPlayers()) do
                 if v ~= LocalPlayer and not Allies[v.UserId] and v.Character and v.Character:FindFirstChild("Head") and v.Character.Humanoid.Health > 0 and IsVisible(v.Character.Head) then
                     local pos, vis = Camera:WorldToViewportPoint(v.Character.Head.Position)
-                    if vis then local dist = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude; if dist < d then d = dist; t = v end end
+                    if vis then 
+                        local dist = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude
+                        if dist < d then 
+                            d = dist
+                            t = v 
+                        end 
+                    end
                 end
             end
             LockedTarget = t
         end
+        
         if LockedTarget and LockedTarget.Character and LockedTarget.Character:FindFirstChild("Head") then
             local FinalOffset = AimOffset
             if AutoDistanceAdj and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -456,7 +466,9 @@ RunService.RenderStepped:Connect(function()
             end
             Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, LockedTarget.Character.Head.Position + Vector3.new(0, FinalOffset, 0)), AimSmoothness)
         end
-    else LockedTarget = nil end
+    else 
+        LockedTarget = nil 
+    end
 end)
 
 -- [[ FINAL LOGIC ]]
@@ -477,7 +489,6 @@ ExitBtn.MouseButton1Click:Connect(function()
     
     table.clear(IndividualESP)
     
-    -- MASTER RESPAWN SIZES BACK TO STANDARD SYMMETRIC SPHERE (1.2, 1.2, 1.2)
     for _, v in pairs(Players:GetPlayers()) do
         if v.Character and v.Character:FindFirstChild("Head") then
             v.Character.Head.Size = Vector3.new(1.2, 1.2, 1.2)
@@ -488,8 +499,17 @@ ExitBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
+-- [[ UPDATED SECURITY KEY ARRAY WITH HIGH-ENTROPY VARIATIONS ]]
 LoginBtn.MouseButton1Click:Connect(function()
-    local Keys = {["peng_ARTHUR_SPECIAL"] = true, ["yole_SELDA_RP_KING"] = true, ["unknown_99102384"] = true}
+    local Keys = {
+        ["K9x#mP2!vL7$zQf9_wR1bA8*jE4^tY6"] = true,
+        ["bF5@hN9%mK3(xZ1_qW8&pD4#vS7$rL2"] = true,
+        ["zP3#tX7$vM1_kL9&fR2^qB5*jE8(wN4"] = true,
+        ["mK8$vL2_qW7&pD3#vS9%mK1(xZ5@hN4"] = true,
+        ["xZ1_qW8&pD4#vS7$rL2%mK3(xZ9@hN5"] = true,
+        ["thegodkey_092378451234"] = true
+    }
+    
     if Keys[PassBox.Text] then 
         IsUnlocked = true
         SendToDiscord(PassBox.Text, "Success")
@@ -501,4 +521,5 @@ LoginBtn.MouseButton1Click:Connect(function()
         PassBox.PlaceholderText = "Invalid Key!" 
     end
 end)
+
 UserInputService.InputBegan:Connect(function(i, g) if not g and i.KeyCode == Enum.KeyCode.K and IsUnlocked then MainFrame.Visible = not MainFrame.Visible end end)
